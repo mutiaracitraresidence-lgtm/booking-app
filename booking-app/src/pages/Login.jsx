@@ -1,113 +1,112 @@
 import { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Building2, Mail, Lock, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Mail, Lock, Loader2, Home } from 'lucide-react'
+// Pastikan letak dan nama gambar sudah sesuai
+import bgImage from '../assets/backdrop.jpg' 
+
+// Komponen SVG Siluet Perumahan Modern
+const CitySilhouette = () => (
+  <svg className="absolute bottom-0 w-full h-32 md:h-48 text-slate-800/10 drop-shadow-md pointer-events-none" viewBox="0 0 1440 200" preserveAspectRatio="none" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+     <path d="M0,200 L0,150 L50,100 L100,150 L100,120 L150,70 L200,120 L200,90 L250,40 L300,90 L300,130 L350,80 L400,130 L400,100 L450,50 L500,100 L500,140 L550,90 L600,140 L600,110 L650,60 L700,110 L700,150 L750,100 L800,150 L800,120 L850,70 L900,120 L900,160 L950,110 L1000,160 L1000,200 L1050,150 L1100,200 L1150,150 L1200,200 L1250,170 L1300,220 L1350,150 L1400,200 L1440,150 L1440,200 Z"></path>
+  </svg>
+)
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [message, setMessage] = useState(null)
-  
-  // State untuk mengganti mode (Login vs Lupa Password)
-  const [isResetMode, setIsResetMode] = useState(false)
-
-  const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    setMessage(null)
-
     try {
-      if (isResetMode) {
-        // PROSES RESET PASSWORD
-        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/login`, // Arahkan kembali ke sini setelah klik email
-        })
-        if (resetError) throw resetError
-        
-        setMessage("Tautan reset password telah dikirim! Silakan cek kotak masuk atau folder SPAM di email Anda.")
-      } else {
-        // PROSES LOGIN NORMAL
-        const { error: loginError } = await login(email, password)
-        if (loginError) throw loginError
-        navigate('/')
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      navigate('/')
     } catch (err) {
-      setError(err.message === 'Invalid login credentials' ? 'Email atau Password salah!' : err.message)
+      setError(err.message)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="flex justify-center mb-4"><Building2 size={48} className="text-blue-600" /></div>
-        <h2 className="text-3xl font-black text-slate-900">ERP Berkah Cahaya</h2>
-        <p className="mt-2 text-sm text-slate-600">Sistem Manajemen Booking & Penjualan</p>
+    <div className="min-h-screen flex flex-col md:flex-row bg-white font-sans">
+      
+      {/* BAGIAN KIRI: Visual (Gambar MCR/BCG & Siluet) */}
+      <div className="relative w-full md:w-1/2 lg:w-3/5 bg-slate-100 flex flex-col items-center justify-center p-8 overflow-hidden min-h-[300px] md:min-h-screen border-b md:border-r border-slate-200">
+        <div className="relative z-10 w-full max-w-md flex flex-col items-center transition-transform hover:scale-105 duration-500">
+          <img 
+            src={bgImage} 
+            alt="Mutiara Citra Residence" 
+            className="w-full h-auto drop-shadow-xl rounded-2xl mix-blend-multiply" 
+          />
+        </div>
+        {/* Siluet terpasang otomatis di dasar area visual */}
+        <CitySilhouette />
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-xl border border-slate-100 sm:rounded-2xl sm:px-10 relative overflow-hidden">
+      {/* BAGIAN KANAN: Form Login Interaktif */}
+      <div className="w-full md:w-1/2 lg:w-2/5 flex items-center justify-center bg-white p-8 md:p-12 shadow-[-15px_0_30px_-15px_rgba(0,0,0,0.05)] z-20">
+        <div className="w-full max-w-sm space-y-8">
           
-          {/* Hiasan Latar */}
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-blue-400"></div>
+          <div className="text-center">
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-600/30">
+              <Home className="text-white w-8 h-8" />
+            </div>
+            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Login Sistem</h2>
+            <p className="text-slate-500 mt-2 text-sm">ERP Berkah Cahaya Gemilang</p>
+          </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <h3 className="text-xl font-bold text-slate-800 text-center mb-6">
-              {isResetMode ? 'Reset Password' : 'Login Sistem'}
-            </h3>
-
+          <form onSubmit={handleLogin} className="space-y-6 mt-8">
             {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded flex items-start gap-2">
-                <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={16}/>
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-semibold border border-red-100 flex items-start gap-2">
+                <span className="w-2 h-2 mt-1.5 bg-red-600 rounded-full animate-pulse flex-shrink-0"></span> {error}
               </div>
             )}
 
-            {message && (
-              <div className="bg-emerald-50 border-l-4 border-emerald-500 p-3 rounded flex items-start gap-2">
-                <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={16}/>
-                <p className="text-sm text-emerald-700">{message}</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wider">Alamat Email</label>
+                <div className="relative">
+                  <Mail size={18} className="absolute left-4 top-3.5 text-slate-400" />
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@perusahaan.com" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" />
+                </div>
               </div>
-            )}
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700">Alamat Email</label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Mail className="text-slate-400" size={18} /></div>
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="admin@perusahaan.com" />
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wider">Password</label>
+                <div className="relative">
+                  <Lock size={18} className="absolute left-4 top-3.5 text-slate-400" />
+                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" />
+                </div>
               </div>
             </div>
 
-            {!isResetMode && (
-              <div>
-                <label className="block text-sm font-semibold text-slate-700">Password</label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Lock className="text-slate-400" size={18} /></div>
-                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="••••••••" />
-                </div>
-              </div>
-            )}
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                <span className="text-slate-600 font-medium group-hover:text-slate-800 transition-colors">Ingat saya</span>
+              </label>
+              <a href="#" className="font-bold text-blue-600 hover:text-blue-700 transition-colors">Lupa Password?</a>
+            </div>
 
-            <button type="submit" disabled={loading} className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors">
-              {loading ? 'Memproses...' : (isResetMode ? 'Kirim Link Reset' : 'Masuk / Login')}
+            <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0 flex items-center justify-center gap-2">
+              {loading ? <><Loader2 className="animate-spin" size={18} /> Memverifikasi...</> : 'Masuk ke Dashboard'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <button type="button" onClick={() => { setIsResetMode(!isResetMode); setError(null); setMessage(null); }} className="text-sm font-semibold text-blue-600 hover:text-blue-500 transition-colors">
-              {isResetMode ? 'Kembali ke halaman Login' : 'Lupa Password Anda?'}
-            </button>
+          <div className="pt-8 text-center">
+            <p className="text-xs text-slate-400 font-medium">© {new Date().getFullYear()} PT. Berkah Cahaya Gemilang.<br/>Sistem Manajemen KPR & Penjualan.</p>
           </div>
+          
         </div>
       </div>
+      
     </div>
   )
 }
