@@ -1,6 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { LayoutDashboard, Grid3X3, Building, Home, LogOut, FileText, Wallet, FileSpreadsheet, FolderOpen } from 'lucide-react'
+import { LayoutDashboard, Grid3X3, Building, Home, LogOut, FileText, Wallet, FileSpreadsheet, FolderOpen, Users, Menu, X } from 'lucide-react'
+
 import Login from './pages/Login'
 import StockUnit from './pages/StockUnit'
 import MasterProject from './pages/MasterProject'
@@ -13,94 +15,90 @@ import Dashboard from './pages/Dashboard'
 import AgencyPortal from './pages/AgencyPortal'
 import VerifyReceipt from './pages/VerifyReceipt'
 import UserManagement from './pages/UserManagement'
-import { Users } from 'lucide-react' // Tambahkan ikon ini jika belum ada
 
-// Komponen Sidebar Layout
 const MainLayout = ({ children }) => {
-  // 1. PASTIKAN 'user' DITAMBAHKAN DI SINI
   const { logout, userProfile, user } = useAuth()
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const location = useLocation()
   
-  // LOGIKA DETEKSI JABATAN (ROLE)
-  // 2. DEFINISIKAN userEmail SEBELUM DIGUNAKAN
   const userEmail = user?.email || userProfile?.email || ''
   const userRole = userProfile?.roles?.name?.toLowerCase() || ''
   
-  // 3. JALUR VIP: Email Anda otomatis menjadi Super Admin
-  const isSuperAdmin = userRole === 'super admin' || userRole === 'admin' || userEmail === 'irvannurcahyo439@gmail.com'
-  
-  const isAgency = userRole === 'agency' || userRole === 'marketing'
-  const isFinance = userRole === 'finance' || userRole === 'keuangan'
-  const isKpr = userRole === 'kpr' || userRole === 'admin kpr'
+  // Perbaikan Logika Jabatan (Cocok dengan Database Supabase)
+  const isSuperAdmin = userRole === 'direktur' || userEmail === 'irvannurcahyo439@gmail.com'
+  const isAgency = userRole === 'agensi' || isSuperAdmin
+  const isFinance = userRole === 'admin keuangan' || isSuperAdmin
+  const isKpr = userRole === 'admin kpr' || isSuperAdmin
+
+  const closeMenu = () => setIsMobileOpen(false)
+  const isActive = (path) => location.pathname === path ? 'bg-blue-600 text-white' : 'hover:bg-slate-800'
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col">
-        <div className="p-6 border-b border-slate-800">
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
+      
+      {/* Header Khusus HP */}
+      <div className="md:hidden fixed top-0 w-full bg-slate-900 text-white z-50 flex justify-between items-center p-4 shadow-md">
+        <h2 className="text-lg font-bold text-blue-400">Berkah Cahaya Gemilang</h2>
+        <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="p-1 bg-slate-800 rounded-md">
+          {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Overlay Gelap HP */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={closeMenu}></div>
+      )}
+
+      {/* Sidebar Menu Responsif */}
+      <aside className={`fixed md:static inset-y-0 left-0 z-40 w-64 bg-slate-900 text-white flex flex-col transition-transform duration-300 ease-in-out ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} pt-16 md:pt-0`}>
+        
+        <div className="p-6 hidden md:block border-b border-slate-800">
           <h2 className="text-xl font-bold text-blue-400">Berkah Cahaya<br/>Gemilang</h2>
         </div>
         
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {/* MENU UMUM (Semua Bisa Lihat) */}
-          <Link to="/" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors">
+          <Link to="/" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive('/')}`}>
             <LayoutDashboard size={20} /> Dashboard
           </Link>
           
-          <Link to="/stock" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors">
+          <Link to="/stock" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive('/stock')}`}>
             <Grid3X3 size={20} /> Live Stock
           </Link>
 
-          {/* MENU AGENSI & MARKETING */}
-          {(isSuperAdmin || isAgency) && (
+          {isAgency && (
             <>
-              <Link to="/booking" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors text-yellow-400">
+              <Link to="/booking" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-yellow-400 ${isActive('/booking')}`}>
                 <FileText size={20} /> Form Booking
               </Link>
-              <Link to="/agency-portal" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors text-purple-400">
+              <Link to="/agency-portal" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-purple-400 ${isActive('/agency-portal')}`}>
                 <FolderOpen size={20} /> Portal Agensi
               </Link>
             </>
           )}
 
-          {/* MENU KEUANGAN */}
-          {(isSuperAdmin || isFinance) && (
-            <Link to="/finance" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors text-green-400">
+          {isFinance && (
+            <Link to="/finance" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-green-400 ${isActive('/finance')}`}>
               <Wallet size={20} /> Validasi Keuangan
             </Link>
           )}
 
-          {/* MENU ADMIN KPR */}
-          {(isSuperAdmin || isKpr) && (
-            <Link to="/kpr" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors text-blue-300">
+          {isKpr && (
+            <Link to="/kpr" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-blue-300 ${isActive('/kpr')}`}>
               <FileSpreadsheet size={20} /> Pemberkasan KPR
             </Link>
           )}
 
-          {/* MENU MASTER DATA (Hanya Super Admin) */}
+          {/* Menghapus Blok Kode Menu Direksi yang Ganda */}
           {isSuperAdmin && (
             <div className="pt-4 mt-4 border-t border-slate-800">
               <p className="text-[10px] uppercase font-bold text-slate-500 mb-2 px-3">Data Master (Khusus Direksi)</p>
-              <Link to="/project" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors">
+              <Link to="/project" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive('/project')}`}>
                 <Building size={20} /> Master Project
               </Link>
-              <Link to="/unit" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors">
+              <Link to="/unit" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive('/unit')}`}>
                 <Home size={20} /> Master Unit
               </Link>
-            </div>
-          )}
-          {/* MENU MASTER DATA (Hanya Super Admin) */}
-          {isSuperAdmin && (
-            <div className="pt-4 mt-4 border-t border-slate-800">
-              <p className="text-[10px] uppercase font-bold text-slate-500 mb-2 px-3">Data Master (Khusus Direksi)</p>
-              <Link to="/project" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors">
-                <Building size={20} /> Master Project
-              </Link>
-              <Link to="/unit" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors">
-                <Home size={20} /> Master Unit
-              </Link>
-
-              {/* TOMBOL MENU BARU */}
-              <Link to="/users" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors text-emerald-400">
+              <Link to="/users" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-emerald-400 ${isActive('/users')}`}>
                 <Users size={20} /> Kelola Akun
               </Link>
             </div>
@@ -110,7 +108,7 @@ const MainLayout = ({ children }) => {
         <div className="p-4 border-t border-slate-800">
           <div className="mb-4 px-3">
             <p className="text-sm font-semibold truncate">{userProfile?.full_name || 'Admin / User'}</p>
-            <p className="text-xs text-yellow-500 uppercase font-bold">{userProfile?.roles?.name || (isSuperAdmin ? 'SUPER ADMIN' : 'AUTHORIZED')}</p>
+            <p className="text-xs text-yellow-500 uppercase font-bold">{userProfile?.roles?.name || (isSuperAdmin ? 'DIREKTUR' : 'AUTHORIZED')}</p>
           </div>
           <button onClick={logout} className="w-full flex items-center justify-center gap-2 p-2 bg-red-500 hover:bg-red-600 rounded-lg transition-colors font-semibold">
             <LogOut size={18} /> Logout
@@ -118,8 +116,8 @@ const MainLayout = ({ children }) => {
         </div>
       </aside>
 
-      {/* Konten Utama */}
-      <main className="flex-1 overflow-y-auto">
+      {/* Konten Utama Responsif */}
+      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
         {children}
       </main>
     </div>
