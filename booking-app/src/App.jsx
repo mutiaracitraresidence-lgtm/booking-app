@@ -15,6 +15,7 @@ import Dashboard from './pages/Dashboard'
 import AgencyPortal from './pages/AgencyPortal'
 import VerifyReceipt from './pages/VerifyReceipt'
 import UserManagement from './pages/UserManagement'
+import ChangePassword from './pages/ChangePassword'
 
 const MainLayout = ({ children }) => {
   const { logout, userProfile, user } = useAuth()
@@ -101,6 +102,9 @@ const MainLayout = ({ children }) => {
               <Link to="/users" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-emerald-400 ${isActive('/users')}`}>
                 <Users size={20} /> Kelola Akun
               </Link>
+              <Link to="/change-password" className="w-full flex items-center justify-center gap-2 p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors font-semibold text-sm mb-2">
+                <Lock size={16} /> Ganti Password
+              </Link>
             </div>
           )}
         </nav>
@@ -141,6 +145,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" />} />
           <Route path="/verify" element={<VerifyReceipt />} />
           <Route path="/users" element={<ProtectedRoute><MainLayout><UserManagement /></MainLayout></ProtectedRoute>} />
+          <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
         </Routes>
       </Router>
     </AuthProvider>
