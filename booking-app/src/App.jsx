@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { LayoutDashboard, Grid3X3, Building, Home, LogOut, FileText, Wallet, FileSpreadsheet, FolderOpen, Users, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Grid3X3, Building, Home, LogOut, FileText, Wallet, FileSpreadsheet, FolderOpen, Users, Menu, X,Lock, } from 'lucide-react'
 
 import Login from './pages/Login'
 import StockUnit from './pages/StockUnit'

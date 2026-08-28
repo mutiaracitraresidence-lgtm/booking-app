@@ -7,6 +7,7 @@ export default function ChangePassword() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false) // State terpisah untuk konfirmasi
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -74,6 +75,7 @@ export default function ChangePassword() {
         )}
 
         <form onSubmit={handleUpdatePassword} className="space-y-5">
+          {/* PASSWORD BARU */}
           <div>
             <label className="text-white text-xs font-bold uppercase tracking-wider mb-2 block">
               Password Baru
@@ -98,6 +100,7 @@ export default function ChangePassword() {
             </div>
           </div>
 
+          {/* KONFIRMASI PASSWORD BARU DENGAN IKON MATA */}
           <div>
             <label className="text-white text-xs font-bold uppercase tracking-wider mb-2 block">
               Konfirmasi Password Baru
@@ -105,13 +108,20 @@ export default function ChangePassword() {
             <div className="relative">
               <Lock className="absolute left-4 top-3.5 text-slate-400" size={18} />
               <input
-                type={showPassword ? "text" : "password"}
+                type={showConfirmPassword ? "text" : "password"}
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
+                className="w-full pl-11 pr-12 py-3 rounded-xl bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-3.5 text-slate-400 hover:text-white"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
