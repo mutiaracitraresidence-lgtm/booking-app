@@ -2,16 +2,22 @@ import { useState, useEffect } from 'react'
 import { getKprBookings, updateKprStatusTransaction, rejectKprTransaction } from '../services/bookingService'
 import { FileSpreadsheet, CheckCircle2, ChevronRight, Building, AlertTriangle, XCircle, Edit3, Download, FileText } from 'lucide-react'
 
-// Komponen Download Saja (Tanpa Upload)
 const ReadOnlyDocumentRow = ({ title, docKey, item }) => {
   const fileUrl = item[docKey]
   return (
     <div className="flex justify-between items-center py-3 border-b border-gray-100">
       <p className="text-sm font-semibold text-gray-700">{title}</p>
       {fileUrl ? (
-        <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 bg-green-50 text-green-700 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-green-100 border border-green-200 transition-colors">
-          <Download size={14} /> Buka File / Unduh
-        </a>
+        <div className="flex items-center gap-2">
+          {/* Tombol Buka di Tab Baru */}
+          <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-100 border border-green-200 transition-colors">
+            Lihat
+          </a>
+          {/* Tombol Unduh Paksa */}
+          <a href={fileUrl} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition-colors">
+            <Download size={14} /> Unduh File
+          </a>
+        </div>
       ) : (
         <span className="text-xs text-red-500 font-semibold bg-red-50 px-2 py-1 rounded">Berkas Hilang</span>
       )}
