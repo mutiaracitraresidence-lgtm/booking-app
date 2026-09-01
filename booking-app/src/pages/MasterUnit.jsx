@@ -49,11 +49,14 @@ export default function MasterUnit() {
         {
           project_id: selectedProject,
           unit_code: generatedCode,
-          type: tipe,
+          block: blok,             // Tambahan: Menyimpan data ke kolom block
+          unit_number: nomorUnit,  // Tambahan: Menyimpan data ke kolom unit_number
+          unit_type: tipe,         // PERBAIKAN: Ubah 'type' menjadi 'unit_type'
           price: Number(harga),
           status: 'AVAILABLE'
         }
       ])
+      
       if (error) throw error
 
       alert("Unit baru berhasil ditambahkan!")
