@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { LayoutDashboard, Grid3X3, Building, Home, LogOut, FileText, Wallet, FileSpreadsheet, FolderOpen, Users, Menu, X,Lock, } from 'lucide-react'
+import { LayoutDashboard, Grid3X3, Building, Home, LogOut, FileText, Wallet, FileSpreadsheet, FolderOpen, Users, Menu, X, Lock } from 'lucide-react'
 
 import Login from './pages/Login'
 import StockUnit from './pages/StockUnit'
@@ -16,6 +16,7 @@ import AgencyPortal from './pages/AgencyPortal'
 import VerifyReceipt from './pages/VerifyReceipt'
 import UserManagement from './pages/UserManagement'
 import ChangePassword from './pages/ChangePassword'
+import Laporan from "./pages/Laporan";
 
 const MainLayout = ({ children }) => {
   const { logout, userProfile, user } = useAuth()
@@ -25,7 +26,7 @@ const MainLayout = ({ children }) => {
   const userEmail = user?.email || userProfile?.email || ''
   const userRole = userProfile?.roles?.name?.toLowerCase() || ''
   
-  // Perbaikan Logika Jabatan (Cocok dengan Database Supabase)
+  // Logika Jabatan (Cocok dengan Database Supabase)
   const isSuperAdmin = userRole === 'direktur' || userEmail === 'irvannurcahyo439@gmail.com'
   const isAgency = userRole === 'agensi' || isSuperAdmin
   const isFinance = userRole === 'admin keuangan' || isSuperAdmin
@@ -89,10 +90,11 @@ const MainLayout = ({ children }) => {
             </Link>
           )}
 
-          {/* Menghapus Blok Kode Menu Direksi yang Ganda */}
+          {/* Menu Khusus Direksi / Super Admin */}
           {isSuperAdmin && (
             <div className="pt-4 mt-4 border-t border-slate-800">
               <p className="text-[10px] uppercase font-bold text-slate-500 mb-2 px-3">Data Master (Khusus Direksi)</p>
+              
               <Link to="/project" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive('/project')}`}>
                 <Building size={20} /> Master Project
               </Link>
@@ -102,7 +104,13 @@ const MainLayout = ({ children }) => {
               <Link to="/users" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-emerald-400 ${isActive('/users')}`}>
                 <Users size={20} /> Kelola Akun
               </Link>
-              <Link to="/change-password" className="w-full flex items-center justify-center gap-2 p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors font-semibold text-sm mb-2">
+              
+              {/* TOMBOL MENU LAPORAN DITAMBAHKAN DI SINI */}
+              <Link to="/laporan" onClick={closeMenu} className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-pink-400 ${isActive('/laporan')}`}>
+                <FileText size={20} /> Laporan Direksi
+              </Link>
+
+              <Link to="/change-password" className="w-full flex items-center justify-center gap-2 mt-4 p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors font-semibold text-sm">
                 <Lock size={16} /> Ganti Password
               </Link>
             </div>
@@ -146,6 +154,9 @@ export default function App() {
           <Route path="/verify" element={<VerifyReceipt />} />
           <Route path="/users" element={<ProtectedRoute><MainLayout><UserManagement /></MainLayout></ProtectedRoute>} />
           <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
+          
+          {/* PERBAIKAN: Laporan kini dibungkus MainLayout agar Sidebar ikut tampil */}
+          <Route path="/laporan" element={<ProtectedRoute><MainLayout><Laporan /></MainLayout></ProtectedRoute>} />
         </Routes>
       </Router>
     </AuthProvider>
