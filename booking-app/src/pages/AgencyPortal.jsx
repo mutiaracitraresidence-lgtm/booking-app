@@ -3,7 +3,7 @@ import { getAgencyBookings, uploadKprDocument, submitBerkasKpr } from '../servic
 import { useAuth } from '../contexts/AuthContext'
 import { FolderOpen, UploadCloud, CheckCircle, Clock, AlertOctagon } from 'lucide-react'
 
-const DocumentUploadRow = ({ title, description, docKey, item, onUploadSuccess }) => {
+const DocumentUploadRow = ({ title, description, docKey, item, onUploadSuccess, optional = false }) => {
   const [uploading, setUploading] = useState(false)
   const fileUrl = item[docKey]
 
@@ -11,7 +11,6 @@ const DocumentUploadRow = ({ title, description, docKey, item, onUploadSuccess }
     const file = e.target.files[0]
     if (!file) return
 
-    // Validasi Ukuran File (Maksimal 5MB agar tidak terlalu berat, tapi cukup untuk HD)
     if (file.size > 5 * 1024 * 1024) {
       alert("Ukuran file terlalu besar! Maksimal 5MB per dokumen.")
       return
@@ -33,7 +32,8 @@ const DocumentUploadRow = ({ title, description, docKey, item, onUploadSuccess }
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center py-4 border-b border-gray-100 gap-3">
       <div>
         <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
-          {fileUrl ? <CheckCircle size={16} className="text-green-500"/> : <Clock size={16} className="text-yellow-500"/>} {title}
+          {fileUrl ? <CheckCircle size={16} className="text-green-500"/> : <Clock size={16} className={optional ? "text-gray-400" : "text-yellow-500"}/>} 
+          {title} {optional && <span className="text-xs font-normal text-gray-400">(Opsional / Jika Menikah)</span>}
         </p>
         <p className="text-xs text-gray-500 max-w-md leading-relaxed mt-1">{description}</p>
       </div>
@@ -48,8 +48,14 @@ const DocumentUploadRow = ({ title, description, docKey, item, onUploadSuccess }
 // Sub-Komponen Kartu agar setiap transaksi punya Checkbox masing-masing
 const AgencyCard = ({ item, onReload }) => {
   const [isAgreed, setIsAgreed] = useState(false)
+  
+  // Deteksi status pernikahan
+  const [isSingle, setIsSingle] = useState(item.marital_status === 'LAJANG' || false)
+
   const isWaitingDocs = item.status === 'APPROVED' && item.kpr_status === 'Menunggu Dokumen'
-  const isComplete = item.doc_identitas && item.doc_pernikahan && item.doc_kk
+  
+  // Syarat kelengkapan: Identitas dan KK wajib. Buku nikah wajib HANYA JIKA TIDAK LAJANG.
+  const isComplete = item.doc_identitas && item.doc_kk && (isSingle || item.doc_pernikahan)
 
   const handleSubmit = async () => {
     if (window.confirm(`Kirim berkas ${item.customer_name} ke Admin KPR?\nPastikan dokumen benar-benar rapi dan terang.`)) {
@@ -60,6 +66,10 @@ const AgencyCard = ({ item, onReload }) => {
       } catch (error) { alert("Gagal mengirim: " + error.message) }
     }
   }
+
+  // Cek apakah deadline sudah terlewat
+  const deadline = item.deadline_date ? new Date(item.deadline_date) : null;
+  const isExpired = deadline && deadline < new Date();
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -78,11 +88,40 @@ const AgencyCard = ({ item, onReload }) => {
 
       {isWaitingDocs ? (
         <div className="bg-yellow-50/50 p-5 rounded-xl border border-yellow-200">
+          
+          {/* PEMBERITAHUAN BATAS WAKTU 1X24 JAM */}
+          {item.deadline_date && (
+            <div className={`mb-4 p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs font-bold border ${isExpired ? 'bg-red-50 border-red-200 text-red-700' : 'bg-red-50 border-red-200 text-red-700'} gap-2`}>
+              <span className="flex flex-col sm:flex-row sm:items-center gap-1">
+                <span>⏰ Batas Waktu Unggah Dokumen (1x24 Jam):</span>
+                <span className="text-red-600 font-normal italic">
+                  (Apabila tidak di-upload, status unit otomatis kembali tersedia)
+                </span>
+              </span>
+              <span className="bg-white px-2.5 py-1 rounded border border-red-300 shadow-sm whitespace-nowrap">
+                {deadline.toLocaleString('id-ID')} {isExpired && '(TERLEWAT)'}
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-2 mb-4 bg-yellow-100 text-yellow-800 p-3 rounded-lg border border-yellow-300">
             <AlertOctagon size={20} className="text-yellow-600 shrink-0"/>
             <p className="text-xs font-semibold">
               <span className="font-bold uppercase">Instruksi Penting:</span> Wajib menggunakan mesin Scanner / Aplikasi Scan di HP (CamScanner). File harus terang, tidak terpotong, dan tulisan terbaca jelas. Format disarankan: PDF.
             </p>
+          </div>
+
+          {/* OPSI STATUS PERNIKAHAN */}
+          <div className="mb-4 bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between">
+            <span className="text-xs font-bold text-gray-700">Status Pernikahan Konsumen:</span>
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-blue-700">
+              <input 
+                type="checkbox" 
+                checked={isSingle} 
+                onChange={(e) => setIsSingle(e.target.checked)} 
+                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+              />
+              Konsumen Lajang / Belum Menikah (Buku Nikah Opsional)
+            </label>
           </div>
           
           <div className="bg-white rounded-xl p-2 border border-gray-100 shadow-sm">
@@ -93,8 +132,9 @@ const AgencyCard = ({ item, onReload }) => {
             />
             <DocumentUploadRow 
               title="2. Status Pernikahan" 
-              description="Buku Nikah (Buka halaman yang ada Foto & Data Suami Istri) / Akta Cerai / Akta Kematian dalam 1 File Halaman." 
+              description={isSingle ? "Status Lajang (Opsional - Tidak wajib diisi)." : "Buku Nikah (Buka halaman foto & data Suami Istri) / Akta Cerai / Akta Kematian."} 
               docKey="doc_pernikahan" item={item} onUploadSuccess={onReload} 
+              optional={isSingle}
             />
             <DocumentUploadRow 
               title="3. Kartu Keluarga" 
@@ -171,9 +211,11 @@ export default function AgencyPortal() {
             Belum ada data konsumen yang siap di-upload dokumennya.
           </div>
         ) : (
-          bookings.map(item => (
-            <AgencyCard key={item.id} item={item} onReload={loadData} />
-          ))
+          <div>
+            {bookings.map(item => (
+              <AgencyCard key={item.id} item={item} onReload={loadData} />
+            ))}
+          </div>
         )}
       </div>
     </div>

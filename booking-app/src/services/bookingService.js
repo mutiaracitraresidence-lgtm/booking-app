@@ -8,7 +8,6 @@ export const createBookingTransaction = async (bookingData, proofFile) => {
     const fileExt = proofFile.name.split('.').pop()
     const fileName = `proof_${Date.now()}.${fileExt}`
     
-    // Upload ke bucket kpr_documents yang sudah kita buat sebelumnya
     const { error: uploadError } = await supabase.storage
       .from('kpr_documents')
       .upload(fileName, proofFile, { cacheControl: '3600', upsert: true })
@@ -25,6 +24,7 @@ export const createBookingTransaction = async (bookingData, proofFile) => {
   // Panggil RPC atau insert ke database
   const { data, error } = await supabase.from('bookings').insert([
     {
+      booking_number: `BKG-${Date.now()}`, // <--- TAMBAHKAN BARIS INI
       unit_id: bookingData.unit_id,
       marketing_id: bookingData.marketing_id,
       customer_name: bookingData.customer_name,
@@ -54,9 +54,25 @@ export const getBookings = async () => {
 }
 
 export const processApproval = async (bookingId, newStatus) => {
-  const { data, error } = await supabase.rpc('process_booking_status', { p_booking_id: bookingId, p_new_status: newStatus })
-  if (error) throw error
-  return data
+  let updatePayload = { status: newStatus };
+
+  // Jika keuangan menyetujui (APPROVED), aktifkan timer deadline 1x24 jam untuk agensi
+  if (newStatus === 'APPROVED') {
+    const oneDayFromNow = new Date();
+    oneDayFromNow.setDate(oneDayFromNow.getDate() + 1); // Tambah 1 hari
+    
+    updatePayload.deadline_date = oneDayFromNow.toISOString();
+    updatePayload.extension_count = 0;
+  }
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .update(updatePayload)
+    .eq('id', bookingId)
+    .select();
+
+  if (error) throw error;
+  return data;
 }
 
 // --- FUNGSI BARU: KHUSUS PORTAL AGENSI ---
@@ -69,7 +85,19 @@ export const getAgencyBookings = async (agencyId, isAgency) => {
 }
 
 export const submitBerkasKpr = async (bookingId) => {
-  const { data, error } = await supabase.from('bookings').update({ kpr_status: 'Pemberkasan' }).eq('id', bookingId)
+  const fourteenDaysFromNow = new Date();
+  fourteenDaysFromNow.setDate(fourteenDaysFromNow.getDate() + 14); // Tambah 14 hari
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({ 
+      kpr_status: 'Pemberkasan',
+      deadline_date: fourteenDaysFromNow.toISOString(),
+      extension_count: 0 
+    })
+    .eq('id', bookingId)
+    .select();
+
   if (error) throw error
   return data
 }

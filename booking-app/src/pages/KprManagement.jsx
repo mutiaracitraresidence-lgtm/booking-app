@@ -31,6 +31,11 @@ const KprCard = ({ item, kprSteps, onReload }) => {
   const currentIndex = kprSteps.indexOf(currentStatus)
   const rejectionCount = item.kpr_rejection_count || 0
 
+  // Hitung status deadline 14 hari
+  const deadline = item.deadline_date ? new Date(item.deadline_date) : null;
+  const isExpired = deadline && deadline < new Date();
+  const extensionCount = item.extension_count || 0;
+
   const handleUpdate = async (newStatus) => {
     if (newStatus !== 'Pemberkasan' && !bankName) return alert("Mohon isi Nama Bank tujuan KPR!")
 
@@ -91,6 +96,21 @@ const KprCard = ({ item, kprSteps, onReload }) => {
           <p className="text-xs text-gray-500">{item.units?.projects?.project_name}</p>
         </div>
       </div>
+
+      {/* PEMBERITAHUAN BATAS WAKTU 14 HARI KPR */}
+      {item.deadline_date && currentStatus !== 'Akad Kredit' && (
+        <div className={`p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs font-bold border ${isExpired ? 'bg-red-50 border-red-200 text-red-700' : 'bg-blue-50 border-blue-200 text-blue-800'} gap-2`}>
+          <span className="flex flex-col sm:flex-row sm:items-center gap-1">
+            <span>⏳ Batas Waktu Pemberkasan KPR (14 Hari):</span>
+            <span className="font-normal italic">
+              (Perpanjangan ke-{extensionCount} dari maksimal 2 kali)
+            </span>
+          </span>
+          <span className="bg-white px-2.5 py-1 rounded border shadow-sm whitespace-nowrap">
+            {deadline.toLocaleString('id-ID')} {isExpired && '⚠️ (TERLEWAT)'}
+          </span>
+        </div>
+      )}
 
       <div className="flex items-center justify-between w-full mt-2">
         {kprSteps.map((step, index) => {
