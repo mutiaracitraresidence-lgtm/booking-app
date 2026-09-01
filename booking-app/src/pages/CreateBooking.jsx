@@ -11,7 +11,7 @@ export default function CreateBooking() {
   const [marketings, setMarketings] = useState([])
   
   const [selectedProject, setSelectedProject] = useState('')
-  const [selectedBlock, setSelectedBlock] = useState('') // State baru untuk filter Blok
+  const [selectedBlock, setSelectedBlock] = useState('') 
   const [selectedUnit, setSelectedUnit] = useState('')
   
   const [selectedMarketing, setSelectedMarketing] = useState('')
@@ -54,15 +54,12 @@ export default function CreateBooking() {
   }
 
   // ================= LOGIKA FILTER BERTINGKAT =================
-  // 1. Filter unit berdasarkan Project (Menggunakan String agar tidak error)
   const unitsByProject = selectedProject 
     ? units.filter(u => String(u.project_id) === String(selectedProject)) 
     : []
 
-  // 2. Ambil daftar Blok unik dari project yang dipilih (A1, A2, dst)
   const availableBlocks = [...new Set(unitsByProject.map(u => u.block).filter(Boolean))].sort()
 
-  // 3. Filter unit berdasarkan Blok yang dipilih
   const finalUnits = selectedBlock 
     ? unitsByProject.filter(u => u.block === selectedBlock)
     : []
@@ -78,18 +75,25 @@ export default function CreateBooking() {
 
     setLoading(true)
     try {
+      // Hitung tanggal 14 hari dari waktu saat ini
+      const deadlineDate = new Date();
+      deadlineDate.setDate(deadlineDate.getDate() + 14);
+
       const bookingData = {
+        booking_number: `BKG-${Date.now()}`, // TAMBAHAN: Membuat kode booking unik otomatis
         unit_id: selectedUnit,
         marketing_id: selectedMarketing,
         customer_name: customerName,
         customer_nik: customerNik,
         customer_phone: customerPhone,
         booking_fee: Number(bookingFee),
-        payment_method: paymentMethod
+        payment_method: paymentMethod,
+        deadline_date: deadlineDate.toISOString(), 
+        extension_count: 0 
       }
 
       await createBookingTransaction(bookingData, proofFile)
-      alert("Booking Unit Berhasil Dibuat dan Menunggu Validasi Keuangan!")
+      alert("Booking Unit Berhasil Dibuat dan Menunggu Validasi Keuangan (Batas Waktu: 14 Hari)!")
       
       // Reset Form
       setSelectedProject('')
@@ -126,7 +130,6 @@ export default function CreateBooking() {
             <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2"><Building size={16} className="text-blue-600"/> 1. Pemilihan Kavling</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* PILIH PROJECT */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Pilih Project</label>
                 <select 
@@ -135,8 +138,8 @@ export default function CreateBooking() {
                   className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   onChange={(e) => { 
                     setSelectedProject(e.target.value); 
-                    setSelectedBlock(''); // Reset blok saat ganti project
-                    setSelectedUnit('');  // Reset unit saat ganti project
+                    setSelectedBlock(''); 
+                    setSelectedUnit('');  
                   }} 
                 >
                   <option value="">-- Pilih Project --</option>
@@ -144,7 +147,6 @@ export default function CreateBooking() {
                 </select>
               </div>
 
-              {/* PILIH BLOK */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Pilih Blok</label>
                 <select 
@@ -154,7 +156,7 @@ export default function CreateBooking() {
                   className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-sm disabled:bg-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
                   onChange={(e) => { 
                     setSelectedBlock(e.target.value); 
-                    setSelectedUnit(''); // Reset unit saat ganti blok
+                    setSelectedUnit(''); 
                   }} 
                 >
                   <option value="">-- Pilih Blok --</option>
@@ -163,7 +165,6 @@ export default function CreateBooking() {
               </div>
             </div>
 
-            {/* PILIH UNIT (NOMOR KAVLING) */}
             <div className="pt-2">
               <label className="block text-xs font-semibold text-gray-600 mb-1">Nomor Unit / Kavling</label>
               <select 
